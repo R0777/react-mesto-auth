@@ -6,7 +6,7 @@ const InfoTooltip = (props) => {
         <section className={`popup ${props.isOpen && 'active'}`} id={props.id}>
             <form className="popup__block" noValidate>
                 <button className="popup__close" type="button" onClick={props.isClose}></button>
-<div class={`popup__tooltip ${ props.id === 'accept' ? 'accept':'decline'}`} />
+<div className={`popup__tooltip ${ props.id === 'accept' ? 'accept':'decline'}`} />
                 <h4 className="popup__title-tooltip">{props.tooltipTitle}</h4>
             </form>
         </section>

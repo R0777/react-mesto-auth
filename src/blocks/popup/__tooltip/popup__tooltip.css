@@ -3,7 +3,7 @@
   width: 120px;
   height: 120px;
   line-height: 29px;
-  margin: 60px auto;
+  margin: 30px auto 32px;
 }
 
 @media screen and (max-width: 400px) {

@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Redirect, Route, Switch, useHistory } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
 import Header from './Header.js';
 import Main from './Main.js';
+import Login from './Login';
+import Register from './Register';
 import EditAvatarPopup from './EditAvatarPopup'
 import EditProfilePopup from './EditProfilePopup'
 import PopupWithForm from './PopupWithForm';
@@ -8,11 +12,52 @@ import AddPlacePopup from './AddPlacePopup';
 import InfoTooltip from './InfoTooltip';
 import Footer from './Footer.js';
 import '../index.css';
+import * as auth from '../utils/auth.js';
+import { getToken } from '../utils/token';
 import {api} from '../utils/api.js';
 import {CurrentUserContext} from '../contexts/CurrentUserContext'
 import {CurrentCardContext} from '../contexts/CurrentCardContext'
 
 const App = () => {
+    const [loggedIn, setLoggedIn] = useState(false);
+    const [userData, setUserData] = useState({ email: '', password: ''});
+    const history = useHistory();
+
+    const handleLogin = (userData) => {
+        setUserData(userData);
+        setLoggedIn(true);
+    }
+    
+    const tokenCheck = () => {
+        const jwt = getToken();
+    
+        if (!jwt) {
+        return;
+        }
+    
+        auth.getContent(jwt).then((res) => {
+        if (res) {
+            const userData = {
+            email: res.email,
+            password: res.password
+            }
+
+            setLoggedIn(true);
+            setUserData(userData);
+            history.push('/sign-in')
+        }
+        });
+    }
+
+    const signOut = () => {
+        localStorage.removeItem('jwt');
+        history.push('/sign-in');
+      }
+    
+        useEffect(() => {
+          tokenCheck();
+      }, []);
+        
 
     const [isEditProfilePopupOpen,
         setIsEditProfilePopupOpen] = React.useState(false);
@@ -44,7 +89,7 @@ const App = () => {
             console.log(err);
         })
     }, [])
-
+    
     const handleCardLike = (card) => {
         const isLiked = card
             .likes
@@ -160,8 +205,21 @@ const App = () => {
         <CurrentCardContext.Provider value={currentCards}>
             <CurrentUserContext.Provider value={currentUser}>
                 <div className="page">
-                    <Header/>
-                    <Main
+                    <Switch>
+
+                    <Route path="/sign-in">
+                    <Header loginText="Регистрация" link="/sign-up" />
+                    <Login handleLogin={handleLogin} />
+                    </Route>
+                    <Route path="/sign-up">
+                    <Header loginText="Войти" link="/sign-in" />
+                    <Register />
+                    </Route>
+                
+                    <ProtectedRoute path="/" loginText="Выйти" userData={userData} link=""
+                        signOut={signOut}
+                        loggedIn={loggedIn}
+                        component={Main}
                         onCardLike={handleCardLike}
                         onEditProfile={handleEditProfileClick}
                         onAddPlace={handleAddPlaceClick}
@@ -170,7 +228,12 @@ const App = () => {
                         onClose={closeAllPopups}
                         card={isSelectedCard}
                         onCardClick={handleCardClick}
-                        onCardDelete={handleDeleteCard}/>
+                        onCardDelete={handleDeleteCard} />
+            
+                            <Route>
+                        {loggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
+                    </Route>
+                    </Switch>
                     <EditProfilePopup
                         title="Редактировать профиль"
                         id="profile"
@@ -201,7 +264,7 @@ const App = () => {
                         isOpen={isTrashOpen}
                         isClose={closeAllPopups}/>
 
-                        <InfoTooltip 
+                    <InfoTooltip 
                         tooltipTitle="Вы успешно зарегистрировались!"
                         id="accept"
                         isOpen={isTooltipOpen}
@@ -213,11 +276,11 @@ const App = () => {
                         id="decline"
                         isOpen={isTooltipOpen}
                         isClose={closeAllPopups}/>
-
-                    <Footer/>
+                        <Footer/>
                 </div>
             </CurrentUserContext.Provider>
         </CurrentCardContext.Provider>
+
     );
 }
 

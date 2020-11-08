@@ -1,4 +1,5 @@
 class Api {
+  
   constructor({
     url,
     headers,
