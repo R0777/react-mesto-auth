@@ -3,7 +3,8 @@ import { useHistory } from 'react-router-dom';
 import { setToken } from '../utils/token';
 import * as auth from '../utils/auth';
 
-const Login = ({ handleLogin }) => {
+const Login = ({ handleLogin, handleTooltip }) => {
+
 
     const [data, setData] = useState({
         email: '',
@@ -26,12 +27,14 @@ const Login = ({ handleLogin }) => {
         const { email, password } = data;
     
         if (!email || !password){
+        handleTooltip()
           return;
         }
     
         auth.authorize(email, password)
         .then((res) => {
           if (!res){
+            handleTooltip()
             setMessage('Что-то пошло не так =( !')
           }
     
@@ -42,8 +45,12 @@ const Login = ({ handleLogin }) => {
             handleLogin(data);
             history.push('/');
           }
+          else handleTooltip()
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+          handleTooltip()
+          console.log(err)
+        });
       }
     
 

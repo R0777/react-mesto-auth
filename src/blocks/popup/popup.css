@@ -33,6 +33,7 @@
   padding: 0 40px 0 40px;
   justify-content: center;
   align-items: center;
+  z-index: 1;
 }
 
 @media screen and (max-width: 400px) {

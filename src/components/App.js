@@ -26,6 +26,7 @@ const App = () => {
     const handleLogin = (userData) => {
         setUserData(userData);
         setLoggedIn(true);
+        handleTooltip()
     }
     
     const tokenCheck = () => {
@@ -52,11 +53,11 @@ const App = () => {
     const signOut = () => {
         localStorage.removeItem('jwt');
         history.push('/sign-in');
-      }
+    }
     
         useEffect(() => {
-          tokenCheck();
-      }, []);
+        tokenCheck();
+    }, []);
         
 
     const [isEditProfilePopupOpen,
@@ -156,6 +157,10 @@ const App = () => {
         setIsSelectedCard(card)
     }
 
+    function handleTooltip() {
+        setTooltipOpen(true)
+    }
+
     function closeAllPopups() {
         setIsAddPlacePopupOpen(false)
         setIsEditProfilePopupOpen(false)
@@ -208,16 +213,33 @@ const App = () => {
                     <Switch>
 
                     <Route path="/sign-in">
-                    <Header loginText="Регистрация" link="/sign-up" />
-                    <Login handleLogin={handleLogin} />
+                    <InfoTooltip 
+                        onClose={closeAllPopups} 
+                        isTooltipOpen={isTooltipOpen} 
+                        tooltipTitle="Что-то пошло не так! Попробуйте ещё раз." />
+                    <Header 
+                        loginText="Регистрация" 
+                        link="/sign-up" />
+                    <Login 
+                        handleLogin={handleLogin} 
+                        handleTooltip={handleTooltip} />
                     </Route>
-                    <Route path="/sign-up">
-                    <Header loginText="Войти" link="/sign-in" />
+                    <Route 
+                        path="/sign-up">
+                    <Header 
+                        loginText="Войти" 
+                        link="/sign-in" />
                     <Register />
                     </Route>
                 
-                    <ProtectedRoute path="/" loginText="Выйти" userData={userData} link=""
+                    <ProtectedRoute 
+                        path="/" 
+                        loginText="Выйти" 
+                        userData={userData} 
+                        link=""
                         signOut={signOut}
+                        handleTooltip={handleTooltip}
+                        isTooltipOpen={isTooltipOpen}
                         loggedIn={loggedIn}
                         component={Main}
                         onCardLike={handleCardLike}
@@ -263,20 +285,7 @@ const App = () => {
                         buttonText={'Удалить'}
                         isOpen={isTrashOpen}
                         isClose={closeAllPopups}/>
-
-                    <InfoTooltip 
-                        tooltipTitle="Вы успешно зарегистрировались!"
-                        id="accept"
-                        isOpen={isTooltipOpen}
-                        isClose={closeAllPopups}/>
-
-                        <InfoTooltip 
-                        tooltipTitle="Что-то пошло не так!
-                        Попробуйте ещё раз."
-                        id="decline"
-                        isOpen={isTooltipOpen}
-                        isClose={closeAllPopups}/>
-                        <Footer/>
+                        <Footer />
                 </div>
             </CurrentUserContext.Provider>
         </CurrentCardContext.Provider>

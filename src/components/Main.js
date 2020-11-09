@@ -25,7 +25,6 @@ const Main = (props) => {
 
     return (
         <main>
-
             <UserProfile
                 avatar={props.onEditAvatar}
                 profile={props.onEditProfile}
