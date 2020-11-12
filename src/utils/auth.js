@@ -11,12 +11,8 @@ export const register = (email, password) => {
     body: JSON.stringify({email, password})
   })
   .then((res) => {
-    return res.json();
+    return res
   })
-  .then((res) => {
-    return res;
-  })
-  .catch((err) => console.log(err));
 };
 
 export const authorize = (email, password) => {
@@ -33,11 +29,9 @@ export const authorize = (email, password) => {
       setToken(res.token);
       return res;
     } else {
-      
       return;
     }
   })
-  .catch(err => console.log(err))
 };
 
 export const getContent = (token) => {

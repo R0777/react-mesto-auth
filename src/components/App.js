@@ -11,9 +11,8 @@ import PopupWithForm from './PopupWithForm';
 import AddPlacePopup from './AddPlacePopup';
 import InfoTooltip from './InfoTooltip';
 import Footer from './Footer.js';
-import '../index.css';
 import * as auth from '../utils/auth.js';
-import { getToken } from '../utils/token';
+import { getToken, setToken } from '../utils/token';
 import {api} from '../utils/api.js';
 import {CurrentUserContext} from '../contexts/CurrentUserContext'
 import {CurrentCardContext} from '../contexts/CurrentCardContext'
@@ -21,7 +20,18 @@ import {CurrentCardContext} from '../contexts/CurrentCardContext'
 const App = () => {
     const [loggedIn, setLoggedIn] = useState(false);
     const [userData, setUserData] = useState({ email: '', password: ''});
+    const [path, setPath] = useState('/sign-up');
+    const [text, setText] = useState('Регистрация');
     const history = useHistory();
+
+    const handlePath = (path) => {
+        setPath(path);
+    }
+
+    const handleText = (text) => {
+        setText(text);
+    }
+
 
     const handleLogin = (userData) => {
         setUserData(userData);
@@ -37,21 +47,23 @@ const App = () => {
         }
     
         auth.getContent(jwt).then((res) => {
-        if (res) {
-            const userData = {
-            email: res.email,
-            password: res.password
+        if (res.data.email) {
+            const userData = { 
+            email: res.data.email,
             }
-
             setLoggedIn(true);
             setUserData(userData);
-            history.push('/sign-in')
+            history.push('/')
         }
-        });
+        })
+        .catch((err) => {
+            console.log(err);
+        })
     }
 
     const signOut = () => {
         localStorage.removeItem('jwt');
+        setLoggedIn(false);
         history.push('/sign-in');
     }
     
@@ -59,7 +71,6 @@ const App = () => {
         tokenCheck();
     }, []);
         
-
     const [isEditProfilePopupOpen,
         setIsEditProfilePopupOpen] = React.useState(false);
     const [isAddPlacePopupOpen,
@@ -171,8 +182,7 @@ const App = () => {
     }
 
     function handleUpdateUser({name, about}) {
-        api
-            .setProfile(name, about)
+        api.setProfile(name, about)
             .then(res => {
                 setCurrentUser(res)
                 closeAllPopups();
@@ -183,8 +193,7 @@ const App = () => {
     }
 
     const handleUpdateAvatar = ({avatar}) => {
-        api
-            .profileAvatar(avatar)
+        api.profileAvatar(avatar)
             .then(res => {
                 setCurrentUser(res)
                 closeAllPopups();
@@ -195,49 +204,105 @@ const App = () => {
     }
 
     const handleAddPlaceSubmit = ({place, link}) => {
-        api
-            .setCard(place, link)
+        api.setCard(place, link)
             .then(res => {
                 setCurrentCards([
                     res, ...currentCards
                 ])
                 closeAllPopups();
             })
+            .catch((err) => {
+                console.log(err);
+            })
         
+    }
+
+    const handlRegister = (email, password) => {
+
+        auth.register(email, password)
+            .then((res) => {
+
+                if ((res.status !== 401) && (res.status !== 400 )) {
+                    history.push('/sign-in') 
+                } else handleTooltip();
+            })
+            .catch((err) => {
+                console.log(err)
+                handleTooltip();
+                history.push('/sign-up');
+            });
+    }
+
+    const handlAuthorize = (data) => {
+        const { email, password } = data;
+
+        if (!email || !password){
+            handleTooltip()
+            return;
+        }
+
+        auth.authorize(email, password)
+            .then((res) => {
+                if (!res){
+                    handleTooltip()
+                }
+    
+                if (res.token) {
+                setToken(res.token);
+                //setData({ email: '', password: ''});
+                handleLogin(data);
+                history.push('/');
+                }
+                else handleTooltip()
+            })
+            .catch(err => {
+                handleTooltip()
+                console.log(err)
+            });
     }
 
     return (
         <CurrentCardContext.Provider value={currentCards}>
             <CurrentUserContext.Provider value={currentUser}>
                 <div className="page">
+                    <InfoTooltip 
+                        loggedIn={loggedIn}
+                        onClose={closeAllPopups} 
+                        isTooltipOpen={isTooltipOpen} />
+                    <Header
+                        text={text}
+                        path={path}
+                        handlePath={handlePath}
+                        handleText={handleText}
+                        loggedIn={loggedIn}
+                        signOut={signOut} 
+                        userData={userData} />
                     <Switch>
 
-                    <Route path="/sign-in">
-                    <InfoTooltip 
-                        onClose={closeAllPopups} 
-                        isTooltipOpen={isTooltipOpen} 
-                        tooltipTitle="Что-то пошло не так! Попробуйте ещё раз." />
-                    <Header 
-                        loginText="Регистрация" 
-                        link="/sign-up" />
+                    <Route path="/sign-in">                    
                     <Login 
+                        handlAuthorize={handlAuthorize}
                         handleLogin={handleLogin} 
                         handleTooltip={handleTooltip} />
                     </Route>
+
                     <Route 
-                        path="/sign-up">
-                    <Header 
-                        loginText="Войти" 
-                        link="/sign-in" />
-                    <Register />
+                        path="/sign-up"> 
+                    <Register 
+                        handleTooltip={handleTooltip} 
+                        handlRegister={handlRegister}
+                        text={text}
+                        path={path}
+                        handlePath={handlePath}
+                        handleText={handleText}
+                        />
                     </Route>
-                
+
                     <ProtectedRoute 
                         path="/" 
                         loginText="Выйти" 
                         userData={userData} 
                         link=""
-                        signOut={signOut}
                         handleTooltip={handleTooltip}
                         isTooltipOpen={isTooltipOpen}
                         loggedIn={loggedIn}
@@ -251,10 +316,11 @@ const App = () => {
                         card={isSelectedCard}
                         onCardClick={handleCardClick}
                         onCardDelete={handleDeleteCard} />
-            
-                            <Route>
+
+                    <Route>
                         {loggedIn ? <Redirect to="/" /> : <Redirect to="/sign-in" />}
                     </Route>
+
                     </Switch>
                     <EditProfilePopup
                         title="Редактировать профиль"

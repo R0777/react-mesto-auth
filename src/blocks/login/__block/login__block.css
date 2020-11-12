@@ -1,5 +1,6 @@
 .login__block {
   font-family: 'Inter', 'Arial', sans-serif;
-  width: 100%;
+  max-width: 358px;
+  margin: auto;
   position: relative;
 }
